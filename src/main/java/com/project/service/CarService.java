@@ -1,5 +1,6 @@
 package com.project.service;
 
+import com.project.entities.Booking;
 import com.project.entities.Car;
 import com.project.helper.Car.FuelType;
 import com.project.helper.Car.TransmissionType;
@@ -15,6 +16,9 @@ public class CarService {
 
     @Autowired
     private CarRepo carRepo;
+
+    @Autowired
+    private BookingService bookingService;
 
     // Get all cars
     public List<Car> getAllCarsInfo() {
@@ -78,25 +82,34 @@ public class CarService {
 
 
     // Delete car by ID
-    public boolean deleteCarById(String id) {
+    public boolean deleteCarById(String carId) {
         // Check if the provided ID is null or empty
-        if (id == null || id.trim().isEmpty()) {
+        if (carId == null || carId.trim().isEmpty()) {
             throw new IllegalArgumentException("Car ID must not be null or empty");
         }
 
         try {
-            // Check if the car exists before trying to delete
-            Optional<Car> existingCar = carRepo.findById(id);
+            // Find the car
+            Optional<Car> existingCar = carRepo.findById(carId);
             if (existingCar.isPresent()) {
-                carRepo.deleteById(id);
-                System.out.println("Car with ID " + id + " has been deleted successfully.");
+                Car car = existingCar.get();
+
+                // Call deleteBooking for each booking related to this car
+                List<Booking> bookings = bookingService.getBookingsByCarId(carId);
+                for (Booking booking : bookings) {
+                    bookingService.deleteBooking(booking.getBookingId());
+                }
+
+                // Delete the car after all associated bookings are removed
+                carRepo.deleteById(carId);
+                System.out.println("Car with ID " + carId + " and associated bookings have been deleted successfully.");
                 return true;
             } else {
-                System.out.println("No car found with ID " + id + " to delete.");
+                System.out.println("No car found with ID " + carId + " to delete.");
                 return false;
             }
         } catch (Exception e) {
-            System.err.println("Error occurred while trying to delete car with ID " + id + ": " + e.getMessage());
+            System.err.println("Error occurred while trying to delete car with ID " + carId + ": " + e.getMessage());
             return false;
         }
     }

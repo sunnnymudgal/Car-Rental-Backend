@@ -1,15 +1,22 @@
 package com.project.entities;
 
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.stereotype.Component;
 
-@Component("Booking")
-public class Booking {
+import java.util.Date;
 
+@Component("Booking")
+@Data
+public class Booking {
+    @Id
     private String bookingId;
     private String customerId;
-    private String bookingDate;
-    private String startDate;
-    private String endDate;
+    private String carId;
+    private Date bookingDate;
+    private Date startDate;
+    private Date endDate;
     private String totalCost;
 
 }

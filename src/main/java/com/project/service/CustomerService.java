@@ -1,5 +1,6 @@
 package com.project.service;
 
+import com.project.entities.Booking;
 import com.project.entities.Customer;
 import com.project.repos.CustomerRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +14,17 @@ public class CustomerService {
     @Autowired
     private CustomerRepo customerRepo;
 
+    @Autowired
+    private BookingService bookingService;
+
     // Get all customers
     public List<Customer> getAll() {
         return customerRepo.findAll();
+    }
+
+    //get Customer by id
+    public Optional<Customer> getCustomerById(String id){
+        return customerRepo.findById(id);
     }
 
     // Add a new customer
@@ -55,6 +64,21 @@ public class CustomerService {
 
     // Delete a customer by customerId
     public void deleteCustomer(String customerId) {
+        // Find the customer by ID
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        // Get the list of bookings associated with the customer
+        List<Booking> customerBookings = customer.getBookings();
+
+        // Delete each booking by calling the deleteBooking method from BookingService
+        if (customerBookings != null) {
+            for (Booking booking : customerBookings) {
+                bookingService.deleteBooking(booking.getBookingId()); // Reuse deleteBooking logic
+            }
+        }
+
+        // Delete the customer after removing bookings
         customerRepo.deleteById(customerId);
     }
 }

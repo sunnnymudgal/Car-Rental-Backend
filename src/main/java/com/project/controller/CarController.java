@@ -40,7 +40,6 @@ public class CarController {
         }
     }
 
-    // Get car by ID
     @GetMapping("/{id}")
     public ResponseEntity<Car> getCarById(@PathVariable String id) {
         Optional<Car> carData = carService.getCarById(id);

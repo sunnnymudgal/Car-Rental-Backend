@@ -21,5 +21,7 @@ public class Car {
     private FuelType fuelType;
     private TransmissionType transmissionType;
     private String location;
+    private String bookedByCustomerId;
+
 
 }
