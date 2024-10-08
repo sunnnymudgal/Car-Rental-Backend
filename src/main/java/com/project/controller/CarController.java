@@ -5,10 +5,15 @@ import com.project.helper.Car.FuelType;
 import com.project.helper.Car.TransmissionType;
 import com.project.service.CarService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,17 +28,52 @@ public class CarController {
     @GetMapping("/getInfo")
     public ResponseEntity<List<Car>> getCars() {
         List<Car> cars = carService.getAllCarsInfo();
+
+        for (Car car : cars) {
+            // Assuming car.getImage() returns binary data (byte[])
+            byte[] imageBytes = car.getImage();
+            if (imageBytes != null && imageBytes.length > 0) {
+                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                car.setBase64Image(base64Image); // Set the encoded string in the base64Image field
+            }
+        }
+
         if (cars.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
+
         return new ResponseEntity<>(cars, HttpStatus.OK);
     }
 
     // Add a new car
     @PostMapping("/setInfo")
-    public ResponseEntity<Car> setCar(@RequestBody Car car) {
+    public ResponseEntity<Car> setCar(
+            @RequestParam("model") String model,
+            @RequestParam("brand") String brand,
+            @RequestParam("year") String year,
+            @RequestParam("pricePerDay") String pricePerDay,
+            @RequestParam("isAvailable") boolean isAvailable,
+            @RequestParam("fuelType") FuelType fuelType,
+            @RequestParam("transmissionType") TransmissionType transmissionType,
+            @RequestParam("location") String location,
+            @RequestParam(value = "bookedByCustomerId", required = false) String bookedByCustomerId,
+            @RequestParam(value = "image", required = false) MultipartFile imageFile // Image upload
+    ) {
         try {
-            Car savedCar = carService.addCarInfo(car);
+            Car car = new Car();
+            car.setModel(model);
+            car.setBrand(brand);
+            car.setYear(year);
+            car.setPricePerDay(pricePerDay);
+            car.setAvailable(isAvailable);
+            car.setFuelType(fuelType);
+            car.setTransmissionType(transmissionType);
+            car.setLocation(location);
+            car.setBookedByCustomerId(bookedByCustomerId);
+
+            Car savedCar = carService.addCarInfo(car, imageFile);
+            System.out.println("Received car data: " + model + ", " + brand + ", " + year + ", " + pricePerDay);
+
             return new ResponseEntity<>(savedCar, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -112,6 +152,9 @@ public class CarController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+
 
 
 }

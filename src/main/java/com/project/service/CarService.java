@@ -7,7 +7,12 @@ import com.project.helper.Car.TransmissionType;
 import com.project.repos.CarRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +29,7 @@ public class CarService {
     public List<Car> getAllCarsInfo() {
         try {
             List<Car> cars = carRepo.findAll();
-            System.out.println("Retrieved " + cars.size() + " cars from the repository.");
+//            System.out.println("Retrieved " + cars.size() + " cars from the repository.");
             return cars;
         } catch (Exception e) {
             System.err.println("Error occurred while retrieving cars: " + e.getMessage());
@@ -33,32 +38,38 @@ public class CarService {
     }
 
 
-    // Add a new car
-    public Car addCarInfo(Car car) {
-        // Check if the provided car object is null
-        if (car == null) {
-            throw new IllegalArgumentException("Car object must not be null");
+
+
+        // Add a new car with image
+        public Car addCarInfo(Car car, MultipartFile imageFile) {
+            // Check if the provided car object is null
+            if (car == null) {
+                throw new IllegalArgumentException("Car object must not be null");
+            }
+
+            // Check for required fields
+            if (car.getModel() == null || car.getModel().trim().isEmpty()) {
+                throw new IllegalArgumentException("Car model must not be null or empty");
+            }
+            if (car.getBrand() == null || car.getBrand().trim().isEmpty()) {
+                throw new IllegalArgumentException("Car brand must not be null or empty");
+            }
+
+            try {
+                // Convert image file to byte[] and set to car entity
+                if (imageFile != null && !imageFile.isEmpty()) {
+                    car.setImage(imageFile.getBytes());
+                }
+
+                Car savedCar = carRepo.save(car);
+                System.out.println("Car added successfully: ");
+                return savedCar;
+            } catch (Exception e) {
+                System.err.println("Error occurred while adding the car: " + e.getMessage());
+                throw new RuntimeException("Failed to add car", e);
+            }
         }
 
-        // Check for required fields (example: model and brand)
-        if (car.getModel() == null || car.getModel().trim().isEmpty()) {
-            throw new IllegalArgumentException("Car model must not be null or empty");
-        }
-        if (car.getBrand() == null || car.getBrand().trim().isEmpty()) {
-            throw new IllegalArgumentException("Car brand must not be null or empty");
-        }
-
-        // Additional validation for other fields can be added here
-
-        try {
-            Car savedCar = carRepo.save(car);
-            System.out.println("Car added successfully: " + savedCar);
-            return savedCar;
-        } catch (Exception e) {
-            System.err.println("Error occurred while adding the car: " + e.getMessage());
-            throw new RuntimeException("Failed to add car", e); // Rethrow as a runtime exception
-        }
-    }
 
 
     // Get car by ID
@@ -218,6 +229,7 @@ public class CarService {
             throw new RuntimeException("Car with ID " + carId + " not found");
         }
     }
+
 
 
 }
